@@ -149,8 +149,6 @@
         </dd>
         <dt><label><input type="checkbox" name="div" checked> Division</label></dt>
         <dd>Reverses the multiplication problems.</dd>
-        <dt><label><input type="checkbox" name="whole" checked> Whole numbers</label></dt>
-        <dd>Uses the addition and multiplication ranges.</dd>
         <dt><label><input type="checkbox" name="decimal"> Decimals</label></dt>
         <dd>
           Decimal places:
@@ -158,6 +156,8 @@
         </dd>
         <dt><label><input type="checkbox" name="fraction"> Fractions</label></dt>
         <dd>
+          Replaces whole numbers.
+          <br>
           Numerator:
           <span class="range">(<input name="numerator-min" type="text" value="1" aria-label="Numerator minimum"> to <input name="numerator-max" type="text" value="9" aria-label="Numerator maximum">)</span>
           <br>
@@ -188,7 +188,8 @@
       </p>
       <p id="settings-error" role="alert" hidden></p>
       <button id="theme" type="button" aria-pressed="false">Dark mode</button>
-      <input type="submit" value="Start" aria-keyshortcuts="Space">
+      <button type="reset">Reset to defaults</button>
+      <input id="start" type="submit" value="Start" aria-keyshortcuts="Space">
     </form>
   </main>
 
@@ -204,7 +205,7 @@
       </div>
       <div id="results" hidden>
         <p id="final-score" tabindex="-1"></p>
-        <p><a id="retry" href="#game" aria-keyshortcuts="Space">Try again</a> (Space) or <a id="change-settings" href="#">change settings</a>.</p>
+        <p><a id="retry" href="#game" aria-keyshortcuts="Space">Try again</a> (Space) or <a id="change-settings" href="#" aria-keyshortcuts="Escape">change settings</a> (Esc).</p>
       </div>
     </div>
   </main>
@@ -212,6 +213,7 @@
     const settings = document.getElementById("settings");
     const optionsForm = document.getElementById("options");
     const settingsError = document.getElementById("settings-error");
+    const startButton = document.getElementById("start");
     const game = document.getElementById("game");
     const timeLabel = document.getElementById("time");
     const scoreLabel = document.getElementById("score");
@@ -265,16 +267,15 @@
     }
 
     const operations = ["add", "sub", "mul", "div", "power", "root"];
-    const numberFormats = ["whole", "decimal", "fraction"];
 
     function readOptions(fields) {
       const modes = operations.filter(mode => fields[mode]);
       if (!modes.length) throw new Error("Select at least one operation.");
       const ranges = {};
-      const formats = numberFormats.filter(format => fields[format]);
+      const formats = [fields.fraction ? "fraction" : "whole"];
+      if (fields.decimal) formats.push("decimal");
       const usesBasicArithmetic = fields.add || fields.sub || fields.mul || fields.div;
-      if (usesBasicArithmetic && !formats.length) throw new Error("Select at least one number format.");
-      const usesOperandRanges = fields.whole || fields.decimal;
+      const usesOperandRanges = !fields.fraction || fields.decimal;
       if (usesOperandRanges && (fields.add || fields.sub)) {
         ranges.add = [
           readRange(fields, "add-left", "Addition first"),
@@ -582,10 +583,13 @@
     });
 
     function readSettingsFields() {
-      const fields = Object.fromEntries(new FormData(optionsForm));
-      for (const format of numberFormats) fields[format] = Boolean(fields[format]);
-      return fields;
+      return Object.fromEntries(new FormData(optionsForm));
     }
+
+    optionsForm.addEventListener("reset", () => {
+      settingsError.hidden = true;
+      startButton.focus({ preventScroll: true });
+    });
 
     optionsForm.addEventListener("submit", event => {
       event.preventDefault();
@@ -607,9 +611,19 @@
       event.preventDefault();
       startRound(round);
     });
+    function changeSettings(event) {
+      event.preventDefault();
+      history.back();
+    }
+
     document.addEventListener("keydown", event => {
-      if (event.defaultPrevented || event.key !== " " || event.repeat
+      if (event.defaultPrevented || event.repeat
           || event.isComposing || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+      if (event.key === "Escape" && !game.hidden) {
+        changeSettings(event);
+        return;
+      }
+      if (event.key !== " ") return;
       if (!settings.hidden) {
         if (event.target.closest?.("input, select, button, textarea, [contenteditable], a")) return;
         event.preventDefault();
@@ -619,10 +633,7 @@
         startRound(round);
       }
     });
-    document.getElementById("change-settings").addEventListener("click", event => {
-      event.preventDefault();
-      history.back();
-    });
+    document.getElementById("change-settings").addEventListener("click", changeSettings);
 
     function fillSettings(fields) {
       for (const control of optionsForm.elements) {
@@ -646,7 +657,8 @@
           "power-max": saved["square-max"],
           "power-exponent-min": savedExponent,
           "power-exponent-max": savedExponent,
-          [saved["number-format"] || "whole"]: true,
+          decimal: saved["number-format"] === "decimal",
+          fraction: saved["number-format"] === "fraction",
           ...saved,
         };
         fillSettings(fields);
@@ -656,9 +668,11 @@
         }
         history.replaceState(null, "", location.href.split("#")[0]);
       }
+      const returningFromGame = !game.hidden;
       stopTimer();
       game.hidden = true;
       settings.hidden = false;
+      if (returningFromGame) startButton.focus({ preventScroll: true });
     }
 
     window.addEventListener("popstate", restorePage);

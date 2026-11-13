@@ -6,6 +6,6 @@ A browser drill based on the layout and controls of [Arithmetic Zetamac](https:/
 
 **Powers** and **Roots** share a base range and an exponent range. Set both exponent bounds to 2 for squares and square roots, or use 2 to 3 to mix squares and cubes or their roots.
 
-For the four basic operations, check any combination of **Whole numbers**, **Decimals**, and **Fractions** to mix those formats in a round. Set a range of decimal places for decimals or numerator and denominator ranges for fractions. Equivalent fraction answers such as `2/4` and `1/2` are both accepted. Correct answers advance as you type.
+The four basic operations use whole numbers by default. Check **Fractions** to replace them with fractions, and check **Decimals** to mix decimals into either format. Set a range of decimal places for decimals or numerator and denominator ranges for fractions. Equivalent fraction answers such as `2/4` and `1/2` are both accepted. Correct answers advance as you type.
 
-Use **Dark mode** to switch themes. At the end of a round, press **Space** or click **Try again** to play with the same settings.
+Use **Dark mode** to switch themes. Press **Esc** during or after a round to return to settings. **Reset to defaults** restores the default operations, ranges, and duration. At the end of a round, press **Space** or click **Try again** to play with the same settings.
