@@ -95,7 +95,7 @@
     <form id="options" autocomplete="off">
       <dl>
         <dt><label><input type="checkbox" name="add" checked> Addition</label></dt>
-        <dd id="addition-range">
+        <dd>
           Range:
           <span class="range">(<input name="add-left-min" type="text" value="2" aria-label="Addition first minimum"> to <input name="add-left-max" type="text" value="100" aria-label="Addition first maximum">)</span>
           +
@@ -104,7 +104,7 @@
         <dt><label><input type="checkbox" name="sub" checked> Subtraction</label></dt>
         <dd>Reverses the addition problems.</dd>
         <dt><label><input type="checkbox" name="mul" checked> Multiplication</label></dt>
-        <dd id="multiplication-range">
+        <dd>
           Range:
           <span class="range">(<input name="mul-left-min" type="text" value="2" aria-label="Multiplication first minimum"> to <input name="mul-left-max" type="text" value="12" aria-label="Multiplication first maximum">)</span>
           ×
@@ -112,20 +112,15 @@
         </dd>
         <dt><label><input type="checkbox" name="div" checked> Division</label></dt>
         <dd>Reverses the multiplication problems.</dd>
-        <dt>
-          <label>Number format:
-            <select name="number-format">
-              <option value="whole">Whole numbers</option>
-              <option value="decimal">Decimals</option>
-              <option value="fraction">Fractions</option>
-            </select>
-          </label>
-        </dt>
-        <dd id="decimal-settings" hidden>
+        <dt><label><input type="checkbox" name="whole" checked> Whole numbers</label></dt>
+        <dd>Uses the addition and multiplication ranges.</dd>
+        <dt><label><input type="checkbox" name="decimal"> Decimals</label></dt>
+        <dd>
           Decimal places:
           <span class="range">(<input name="decimal-places-min" type="text" value="1" aria-label="Minimum decimal places"> to <input name="decimal-places-max" type="text" value="2" aria-label="Maximum decimal places">)</span>
         </dd>
-        <dd id="fraction-settings" hidden>
+        <dt><label><input type="checkbox" name="fraction"> Fractions</label></dt>
+        <dd>
           Numerator:
           <span class="range">(<input name="numerator-min" type="text" value="1" aria-label="Numerator minimum"> to <input name="numerator-max" type="text" value="9" aria-label="Numerator maximum">)</span>
           <br>
@@ -177,7 +172,6 @@
   <script>
     const settings = document.getElementById("settings");
     const optionsForm = document.getElementById("options");
-    const numberFormat = optionsForm.elements.namedItem("number-format");
     const settingsError = document.getElementById("settings-error");
     const game = document.getElementById("game");
     const timeLabel = document.getElementById("time");
@@ -231,29 +225,24 @@
     }
 
     const operations = ["add", "sub", "mul", "div", "power", "root"];
-
-    function updateFormatSettings() {
-      const format = numberFormat.value;
-      document.getElementById("addition-range").hidden = format === "fraction";
-      document.getElementById("multiplication-range").hidden = format === "fraction";
-      document.getElementById("decimal-settings").hidden = format !== "decimal";
-      document.getElementById("fraction-settings").hidden = format !== "fraction";
-    }
+    const numberFormats = ["whole", "decimal", "fraction"];
 
     function readOptions(fields) {
       const modes = operations.filter(mode => fields[mode]);
       if (!modes.length) throw new Error("Select at least one operation.");
       const ranges = {};
-      const format = fields["number-format"] || "whole";
+      const formats = numberFormats.filter(format => fields[format]);
       const usesBasicArithmetic = fields.add || fields.sub || fields.mul || fields.div;
+      if (usesBasicArithmetic && !formats.length) throw new Error("Select at least one number format.");
+      const usesOperandRanges = fields.whole || fields.decimal;
       let exponent;
-      if (format !== "fraction" && (fields.add || fields.sub)) {
+      if (usesOperandRanges && (fields.add || fields.sub)) {
         ranges.add = [
           readRange(fields, "add-left", "Addition first"),
           readRange(fields, "add-right", "Addition second"),
         ];
       }
-      if (format !== "fraction" && (fields.mul || fields.div)) {
+      if (usesOperandRanges && (fields.mul || fields.div)) {
         ranges.mul = [
           readRange(fields, "mul-left", "Multiplication first"),
           readRange(fields, "mul-right", "Multiplication second"),
@@ -263,7 +252,7 @@
           throw new Error("Division needs a nonzero number in the first multiplication range.");
         }
       }
-      if (format === "decimal" && usesBasicArithmetic) {
+      if (fields.decimal && usesBasicArithmetic) {
         ranges.decimal = readRange(fields, "decimal-places", "Decimal places");
         const [minPlaces, maxPlaces] = ranges.decimal;
         const maxPlacesForSampler = String(Number.MAX_SAFE_INTEGER).length - 1;
@@ -278,7 +267,7 @@
           }
         }
       }
-      if (format === "fraction" && usesBasicArithmetic) {
+      if (fields.fraction && usesBasicArithmetic) {
         const numerator = readRange(fields, "numerator", "Numerator");
         const denominator = readRange(fields, "denominator", "Denominator");
         if (denominator[0] < 1) throw new Error("Denominators must be positive.");
@@ -306,7 +295,7 @@
           throw new Error("The power is too large. Lower the exponent or narrow the base range.");
         }
       }
-      return { modes, ranges, exponent, format, duration: Number(fields.duration) };
+      return { modes, ranges, exponent, formats, duration: Number(fields.duration) };
     }
 
     const randomWords = new Uint32Array(2);
@@ -358,9 +347,9 @@
 
     const arithmeticSigns = { add: "+", sub: "–", mul: "×", div: "÷" };
 
-    function makeRationalQuestion(mode, ranges) {
+    function makeRationalQuestion(mode, format, ranges) {
       let first, second, formatNumber;
-      if (round.format === "decimal") {
+      if (format === "decimal") {
         const places = randomInteger(round.ranges.decimal);
         const scale = 10n ** BigInt(places);
         first = [randomScaledInteger(ranges[0], scale), scale];
@@ -389,7 +378,7 @@
       return {
         text: left + " " + arithmeticSigns[mode] + " " + right,
         solution: formatNumber(...result),
-        format: round.format,
+        format,
       };
     }
 
@@ -414,7 +403,8 @@
       }
 
       const ranges = mode === "add" || mode === "sub" ? round.ranges.add : round.ranges.mul;
-      if (round.format !== "whole") return makeRationalQuestion(mode, ranges);
+      const format = round.formats[randomBelow(round.formats.length)];
+      if (format !== "whole") return makeRationalQuestion(mode, format, ranges);
       const a = BigInt(randomInteger(ranges[0]));
       const b = BigInt(randomInteger(ranges[1]));
       switch (mode) {
@@ -508,10 +498,10 @@
       }
     });
 
-    numberFormat.addEventListener("change", updateFormatSettings);
     optionsForm.addEventListener("submit", event => {
       event.preventDefault();
       const fields = Object.fromEntries(new FormData(optionsForm));
+      for (const format of numberFormats) fields[format] = Boolean(fields[format]);
       let options;
       try {
         options = readOptions(fields);
@@ -543,13 +533,13 @@
     function restorePage() {
       const saved = history.state?.fields;
       if (saved) {
-        // Older rounds saved the base range under Squares.
+        // Restore rounds saved with the Squares fields or the old format dropdown.
         const fields = {
           power: saved.square,
           "power-min": saved["square-min"],
           "power-max": saved["square-max"],
           "power-exponent": "2",
-          "number-format": "whole",
+          [saved["number-format"] || "whole"]: true,
           ...saved,
         };
         for (const control of optionsForm.elements) {
@@ -560,7 +550,6 @@
             control.value = fields[control.name];
           }
         }
-        updateFormatSettings();
         if (operations.some(mode => fields[mode])) {
           startRound(readOptions(fields));
           return;
