@@ -126,14 +126,14 @@
           <br>
           Denominator:
           <span class="range">(<input name="denominator-min" type="text" value="2" aria-label="Denominator minimum"> to <input name="denominator-max" type="text" value="9" aria-label="Denominator maximum">)</span>
-          <br>
-          Answer fractions in lowest terms as a/b. Use an integer for whole results.
         </dd>
         <dt><label><input type="checkbox" name="power"> Powers</label></dt>
         <dd>
-          Base range:
+          Range:
           <span class="range">(<input name="power-min" type="text" value="10" aria-label="Power base minimum"> to <input name="power-max" type="text" value="50" aria-label="Power base maximum">)</span>
-          <label class="range">Exponent: <input name="power-exponent" type="text" value="2" inputmode="numeric"></label>
+          <br>
+          Exponent range:
+          <span class="range">(<input name="power-exponent-min" type="text" value="2" inputmode="numeric" aria-label="Minimum exponent"> to <input name="power-exponent-max" type="text" value="2" inputmode="numeric" aria-label="Maximum exponent">)</span>
         </dd>
         <dt><label><input type="checkbox" name="root"> Roots</label></dt>
         <dd>Reverses the powers problems.</dd>
@@ -235,7 +235,6 @@
       const usesBasicArithmetic = fields.add || fields.sub || fields.mul || fields.div;
       if (usesBasicArithmetic && !formats.length) throw new Error("Select at least one number format.");
       const usesOperandRanges = fields.whole || fields.decimal;
-      let exponent;
       if (usesOperandRanges && (fields.add || fields.sub)) {
         ranges.add = [
           readRange(fields, "add-left", "Addition first"),
@@ -278,24 +277,25 @@
       }
       if (fields.power || fields.root) {
         ranges.power = readRange(fields, "power", "Power base");
+        ranges.exponent = readRange(fields, "power-exponent", "Exponent");
         const [min, max] = ranges.power;
-        const exponentText = fields["power-exponent"].trim();
-        exponent = Number(exponentText);
+        const [minExponent, maxExponent] = ranges.exponent;
         // Use the same maximum answer size as the multiplication drill.
         const maxResult = BigInt(Number.MAX_SAFE_INTEGER) ** 2n;
-        const maxExponent = maxResult.toString(2).length - 1;
-        if (!/^\d+$/.test(exponentText) || exponent < 2 || exponent > maxExponent) {
-          throw new Error("Exponent must be a whole number from 2 to " + maxExponent + ".");
+        const exponentLimit = maxResult.toString(2).length - 1;
+        if (minExponent < 2 || maxExponent > exponentLimit) {
+          throw new Error("Exponents must be between 2 and " + exponentLimit + ".");
         }
-        if (fields.root && exponent % 2 === 0 && min < 0) {
+        const includesEvenExponent = minExponent % 2 === 0 || minExponent < maxExponent;
+        if (fields.root && includesEvenExponent && min < 0) {
           throw new Error("Even roots need a nonnegative base range.");
         }
         const largestBase = BigInt(Math.max(Math.abs(min), Math.abs(max)));
-        if (largestBase ** BigInt(exponent) > maxResult) {
+        if (largestBase ** BigInt(maxExponent) > maxResult) {
           throw new Error("The power is too large. Lower the exponent or narrow the base range.");
         }
       }
-      return { modes, ranges, exponent, formats, duration: Number(fields.duration) };
+      return { modes, ranges, formats, duration: Number(fields.duration) };
     }
 
     const randomWords = new Uint32Array(2);
@@ -377,29 +377,31 @@
       const result = inverse ? second : combined;
       return {
         text: left + " " + arithmeticSigns[mode] + " " + right,
-        solution: formatNumber(...result),
+        solution: format === "fraction" ? result : formatNumber(...result),
         format,
       };
     }
 
     function makeQuestion(mode) {
       if (mode === "power" || mode === "root") {
-        const [min, max] = round.ranges.power;
-        let base = randomInteger([min, max]);
-        while (min < max && question?.mode === mode && question.base === base) {
-          base = randomInteger([min, max]);
-        }
+        const { power: bases, exponent: exponents } = round.ranges;
+        const hasAlternatives = bases[0] < bases[1] || exponents[0] < exponents[1];
+        let base, exponent;
+        do {
+          base = randomInteger(bases);
+          exponent = randomInteger(exponents);
+        } while (hasAlternatives && question?.mode === mode
+            && question.base === base && question.exponent === exponent);
         const n = BigInt(base);
-        const exponent = round.exponent;
         const raised = String(exponent).replace(/\d/g, digit => "⁰¹²³⁴⁵⁶⁷⁸⁹"[digit]);
         const power = n ** BigInt(exponent);
         if (mode === "root") {
           const radical = ["√", "∛", "∜"][exponent - 2] ?? raised + "√";
           const radicand = power < 0n ? "(" + power + ")" : String(power);
-          return { mode, base, text: radical + radicand, solution: n };
+          return { mode, base, exponent, text: radical + radicand, solution: n };
         }
         const label = base < 0 ? "(" + base + ")" : String(base);
-        return { mode, base, text: label + raised, solution: power };
+        return { mode, base, exponent, text: label + raised, solution: power };
       }
 
       const ranges = mode === "add" || mode === "sub" ? round.ranges.add : round.ranges.mul;
@@ -487,13 +489,28 @@
       return sign + (whole || "0") + (tail ? "." + tail : "") === solution;
     }
 
+    function matchesFraction(value, [numerator, denominator]) {
+      const ratio = /^([+-]?\d+)(?:\s*\/\s*([+-]?\d+))?$/.exec(value);
+      if (ratio) {
+        const divisor = BigInt(ratio[2] ?? "1");
+        return divisor !== 0n && BigInt(ratio[1]) * denominator === numerator * divisor;
+      }
+      const decimal = /^([+-]?)(\d*)\.(\d+)$/.exec(value);
+      if (!decimal) return false;
+      const [, sign, whole, digits] = decimal;
+      const scale = 10n ** BigInt(digits.length);
+      return BigInt(sign + whole + digits) * denominator === numerator * scale;
+    }
+
     answer.addEventListener("input", event => {
       if (event.isComposing || !acceptingAnswers()) return;
       const value = answer.value.trim();
+      if (question.format === "fraction") {
+        if (matchesFraction(value, question.solution)) advance();
+        return;
+      }
       const solution = String(question.solution);
-      if (value === solution
-          || (question.format === "decimal" && matchesDecimal(value, solution))
-          || (question.format === "fraction" && value.replace(/\s*\/\s*/, "/") === solution)) {
+      if (value === solution || (question.format === "decimal" && matchesDecimal(value, solution))) {
         advance();
       }
     });
@@ -533,12 +550,14 @@
     function restorePage() {
       const saved = history.state?.fields;
       if (saved) {
-        // Restore rounds saved with the Squares fields or the old format dropdown.
+        // Restore rounds saved with Squares, a fixed exponent, or the format dropdown.
+        const savedExponent = saved["power-exponent"] ?? "2";
         const fields = {
           power: saved.square,
           "power-min": saved["square-min"],
           "power-max": saved["square-max"],
-          "power-exponent": "2",
+          "power-exponent-min": savedExponent,
+          "power-exponent-max": savedExponent,
           [saved["number-format"] || "whole"]: true,
           ...saved,
         };
