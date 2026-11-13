@@ -6,17 +6,17 @@ A browser drill based on [Arithmetic Zetamac](https://arithmetic.zetamac.com/).
 
 Zetamac has inspired plenty of new versions. They add accounts, score histories, timing for individual problems, drills for your slowest questions, leaderboards, and multiplayer. But they lose Zetamac’s biggest appeal: simplicity. No login, no complicated UI, just pick your settings and start.
 
-Improved Arithmetic Game keeps Zetamac’s simple layout and controls while adding quality of life improvements and new game modes.
+Improved Arithmetic Game keeps Zetamac’s simple layout and controls while adding quality of life improvements and more arithmetic to practice in the same drill.
 
 ## Quality of life
 
 - **Space to start or restart.** Press Space to start from settings or to begin a fresh round with the same settings during or after a game. When your fingers are on the number row, your thumb is already near the space bar.
-- **Dark mode.** Light numbers stay clear against a dark background, with less glare than Zetamac’s white page in a dark room.
+- **Dark mode.** Light numbers stay clear against a dark background, with less glare than Zetamac’s white page in a dark room. Press **R** to switch between light and dark mode, even during a round.
 - **Saved settings.** The game remembers the settings from your last round in the same browser so you can come back and start right away.
 - **Esc and reset.** Press Esc during or after a round to return to settings. **Reset to defaults** restores the original ranges, operations, and 120-second timer.
 - **A steady answer box.** The box stays in place as problems change. A correct answer moves you to the next problem as you type.
 
-## Added features
+## More arithmetic
 
 - **Decimals.** Set the minimum and maximum number of decimal places and mix decimal problems into a round.
 - **Fractions.** Choose separate ranges for numerators and denominators. Fractions are stacked in the problem, and you can type answers with a slash. Equivalent answers like `2/4` and `1/2` both count.

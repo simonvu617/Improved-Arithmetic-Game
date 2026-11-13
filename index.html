@@ -185,7 +185,7 @@
         </label>
       </p>
       <p id="settings-error" role="alert" hidden></p>
-      <button id="theme" type="button" aria-pressed="false">Dark mode</button>
+      <button id="theme" type="button" aria-pressed="false" aria-keyshortcuts="R">Dark mode</button>
       <button type="reset">Reset to defaults</button>
       <input id="start" type="submit" value="Start" aria-keyshortcuts="Space">
     </form>
@@ -240,7 +240,7 @@
     } catch {
       setTheme(false);
     }
-    themeButton.addEventListener("click", () => {
+    function toggleTheme() {
       const dark = themeButton.getAttribute("aria-pressed") === "false";
       setTheme(dark);
       try {
@@ -248,6 +248,10 @@
       } catch {
         // The toggle still works when browser storage is unavailable.
       }
+    }
+
+    themeButton.addEventListener("click", () => {
+      toggleTheme();
       startButton.focus({ preventScroll: true });
     });
 
@@ -618,6 +622,11 @@
     document.addEventListener("keydown", event => {
       if (event.defaultPrevented
           || event.isComposing || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+      if (event.key.toLowerCase() === "r") {
+        event.preventDefault();
+        if (!event.repeat) toggleTheme();
+        return;
+      }
       if (event.key === "Escape" && !event.repeat && !game.hidden) {
         changeSettings(event);
         return;
