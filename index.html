@@ -243,20 +243,73 @@
       return { modes, ranges, duration: Number(fields.duration) };
     }
 
-    function randomInteger([min, max]) {
-      return min + Math.floor(Math.random() * (max - min + 1));
+    const randomWords = new Uint32Array(2);
+
+    function randomBelow(size) {
+      if (size === 1) return 0;
+      const sampleSize = 2 ** 53;
+      const limit = sampleSize - (sampleSize % size);
+      let value;
+      // Draw a 53-bit integer. Discard the excess so each outcome has equal weight.
+      do {
+        crypto.getRandomValues(randomWords);
+        value = (randomWords[0] >>> 11) * (2 ** 32) + randomWords[1];
+      } while (value >= limit);
+      return value % size;
     }
 
-    function primeFactors(number) {
-      const factors = [];
-      for (let divisor = 2; divisor * divisor <= number; divisor += divisor === 2 ? 1 : 2) {
-        while (number % divisor === 0) {
-          factors.push(divisor);
-          number /= divisor;
-        }
+    function randomInteger([min, max]) {
+      return min + randomBelow(max - min + 1);
+    }
+
+    // These Miller–Rabin bases are deterministic for all supported integers:
+    // https://arxiv.org/abs/1207.0063
+    const primeBases = [2n, 3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n];
+
+    function isPrime(number) {
+      if (number < 2n) return false;
+      for (const prime of primeBases) {
+        if (number % prime === 0n) return number === prime;
       }
-      if (number > 1) factors.push(number);
-      return factors;
+
+      const predecessor = number - 1n;
+      let odd = predecessor;
+      let twos = 0;
+      while (odd % 2n === 0n) {
+        odd /= 2n;
+        twos++;
+      }
+
+      for (const base of primeBases) {
+        let residue = 1n;
+        let power = base;
+        for (let exponent = odd; exponent > 0n; exponent /= 2n) {
+          if (exponent % 2n === 1n) residue = (residue * power) % number;
+          power = (power * power) % number;
+        }
+        if (residue === 1n) continue;
+        for (let step = 1; step < twos && residue !== predecessor; step++) {
+          residue = (residue * residue) % number;
+        }
+        if (residue !== predecessor) return false;
+      }
+      return true;
+    }
+
+    function matchesPrimeFactors(value, number) {
+      const parts = value.replace(/,/g, " ").trim().split(/\s+/);
+      let remaining = BigInt(number);
+      const factors = [];
+      for (const part of parts) {
+        if (!/^\d+$/.test(part)) return false;
+        const integer = Number(part);
+        if (!Number.isSafeInteger(integer) || integer < 2) return false;
+        const factor = BigInt(integer);
+        if (remaining % factor !== 0n) return false;
+        remaining /= factor;
+        factors.push(factor);
+      }
+      return remaining === 1n && factors.every(isPrime);
     }
 
     function makeQuestion(mode) {
@@ -267,7 +320,7 @@
           base = randomInteger([min, max]);
         }
         if (mode === "factor") {
-          return { mode, base, text: "Prime factors of " + base, solution: primeFactors(base) };
+          return { mode, base, text: "Prime factors of " + base };
         }
         const n = BigInt(base);
         const label = base < 0 ? "(" + base + ")" : String(base);
@@ -289,7 +342,7 @@
     function nextQuestion() {
       let next;
       do {
-        const mode = round.modes[Math.floor(Math.random() * round.modes.length)];
+        const mode = round.modes[randomBelow(round.modes.length)];
         next = makeQuestion(mode);
       } while (!next);
       question = next;
@@ -363,15 +416,11 @@
     questionForm.addEventListener("submit", event => {
       event.preventDefault();
       if (!acceptingAnswers() || question.mode !== "factor") return;
-      const submitted = answer.value.replace(/,/g, " ").trim().split(/\s+/);
-      if (submitted.length === question.solution.length && submitted.every(factor => /^\d+$/.test(factor))) {
-        const sorted = submitted.map(Number).sort((a, b) => a - b);
-        if (sorted.every((factor, index) => factor === question.solution[index])) {
-          advance();
-          return;
-        }
+      if (matchesPrimeFactors(answer.value, question.base)) {
+        advance();
+      } else {
+        answer.value = "";
       }
-      answer.value = "";
     });
 
     optionsForm.addEventListener("submit", event => {
