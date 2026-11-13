@@ -15,9 +15,9 @@
     }
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --page: #181818;
-      --panel: #303030;
-      --ink: #eee;
+      --page: #080808;
+      --panel: #161616;
+      --ink: #fff;
       --link: #a6c6ff;
       --error: #ffb4aa;
     }
@@ -69,6 +69,7 @@
     .banner #final-score {
       font-size: 36px;
       line-height: 56px;
+      outline: none;
     }
     #answer {
       width: 180px;
@@ -76,17 +77,14 @@
       font: inherit;
       line-height: normal;
     }
-    #theme {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
+    :root[data-theme="dark"] input[type="text"] {
+      background: var(--page);
+      color: var(--ink);
+      border: 1px solid #808080;
     }
-    @media (max-width: 480px), (max-height: 520px) {
-      #theme {
-        position: static;
-        display: block;
-        margin: 16px 20px 16px auto;
-      }
+    :root[data-theme="dark"] #question label,
+    :root[data-theme="dark"] #answer {
+      font-weight: 600;
     }
   </style>
 </head>
@@ -137,6 +135,7 @@
         </label>
       </p>
       <p id="settings-error" role="alert" hidden></p>
+      <button id="theme" type="button" aria-pressed="false">Dark mode</button>
       <input type="submit" value="Start">
     </form>
   </main>
@@ -156,8 +155,6 @@
       </div>
     </div>
   </main>
-  <button id="theme" type="button" aria-pressed="false">Dark mode</button>
-
   <script>
     const settings = document.getElementById("settings");
     const optionsForm = document.getElementById("options");
@@ -198,7 +195,6 @@
       } catch {
         // The toggle still works when browser storage is unavailable.
       }
-      if (timer !== null) answer.focus();
     });
 
     function readRange(fields, name, label) {
@@ -324,7 +320,7 @@
         }
         const n = BigInt(base);
         const label = base < 0 ? "(" + base + ")" : String(base);
-        return { mode, base, text: label + "²", solution: n * n };
+        return { mode, base, text: label + " × " + label, solution: n * n };
       }
 
       const ranges = mode === "add" || mode === "sub" ? round.ranges.add : round.ranges.mul;
