@@ -310,7 +310,10 @@
           throw new Error("The power is too large. Lower the exponent or narrow the base range.");
         }
       }
-      return { modes, ranges, formats, duration: Number(fields.duration) };
+      const hasNegativeRange = ranges.add?.some(([min]) => min < 0)
+        || ranges.mul?.some(([min]) => min < 0) || ranges.power?.[0] < 0;
+      const inputMode = hasNegativeRange ? "text" : (ranges.decimal ? "decimal" : "numeric");
+      return { modes, ranges, formats, inputMode, duration: Number(fields.duration) };
     }
 
     const randomWords = new Uint32Array(2);
@@ -446,10 +449,12 @@
       question = undefined;
       score = 0;
       scoreLabel.textContent = "Score: 0";
+      settingsError.hidden = true;
       settings.hidden = true;
       results.hidden = true;
       questionPanel.hidden = false;
       game.hidden = false;
+      answer.inputMode = round.inputMode;
       nextQuestion();
       deadline = performance.now() + round.duration * 1000;
       updateClock();
@@ -475,7 +480,7 @@
     }
 
     function matchesDecimal(value, solution) {
-      const match = /^(-?)(\d*)\.(\d+)$/.exec(value);
+      const match = /^(-?)(\d*)[.,](\d+)$/.exec(value);
       if (!match) return false;
       const [, sign, whole, digits] = match;
       const tail = digits.replace(/0+$/, "");
@@ -511,7 +516,6 @@
         settingsError.hidden = false;
         return;
       }
-      settingsError.hidden = true;
       history.pushState({ fields }, "", "#game");
       startRound(options, fields);
     });
@@ -539,7 +543,7 @@
       }
       if (event.key !== " ") return;
       if (!settings.hidden) {
-        if (event.repeat || event.target.closest?.("input, select, button, textarea, [contenteditable], a")) return;
+        if (event.repeat || event.target.closest?.("input:not([type='text']), select, button, textarea, [contenteditable], a")) return;
         event.preventDefault();
         optionsForm.requestSubmit();
       } else if (!game.hidden) {

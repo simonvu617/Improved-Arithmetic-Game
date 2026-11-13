@@ -20,4 +20,4 @@ Improved Arithmetic Game keeps Zetamac’s simple layout and controls while addi
 
 - **Powers.** Set a base range and an exponent range. Use an exponent of 2 for squares, or set a range to mix in higher powers.
 - **Roots.** Reverse the powers problems using the same base and exponent ranges.
-- **Decimals.** Set the minimum and maximum number of decimal places and mix decimal problems into a round.
+- **Decimals.** Set the minimum and maximum number of decimal places and mix decimal problems into a round. Enter decimals with a period or a comma.
