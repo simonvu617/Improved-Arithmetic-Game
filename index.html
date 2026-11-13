@@ -74,6 +74,14 @@
       line-height: 56px;
       outline: none;
     }
+    .fraction {
+      display: inline-grid;
+      vertical-align: middle;
+      font-size: 0.75em;
+      line-height: 1;
+    }
+    .fraction > span { padding: 0 0.15em; }
+    .fraction > span:first-child { border-bottom: 1px solid currentColor; }
     #answer {
       width: 180px;
       max-width: 45vw;
@@ -418,6 +426,22 @@
       }
     }
 
+    function fractionOperand(text) {
+      const [top, bottom] = text.split("/");
+      if (bottom === undefined) return text;
+
+      const fraction = document.createElement("span");
+      fraction.className = "fraction";
+      fraction.setAttribute("role", "math");
+      fraction.setAttribute("aria-label", top + " over " + bottom);
+      const numerator = document.createElement("span");
+      const denominator = document.createElement("span");
+      numerator.textContent = top;
+      denominator.textContent = bottom;
+      fraction.append(numerator, denominator);
+      return fraction;
+    }
+
     function nextQuestion() {
       let next;
       do {
@@ -425,7 +449,12 @@
         next = makeQuestion(mode);
       } while (!next);
       question = next;
-      problem.textContent = question.text;
+      if (question.format === "fraction") {
+        const [left, operator, right] = question.text.split(" ");
+        problem.replaceChildren(fractionOperand(left), " " + operator + " ", fractionOperand(right));
+      } else {
+        problem.textContent = question.text;
+      }
       answer.value = "";
     }
 
