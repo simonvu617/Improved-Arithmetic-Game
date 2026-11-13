@@ -188,7 +188,7 @@
       </p>
       <p id="settings-error" role="alert" hidden></p>
       <button id="theme" type="button" aria-pressed="false">Dark mode</button>
-      <input type="submit" value="Start">
+      <input type="submit" value="Start" aria-keyshortcuts="Space">
     </form>
   </main>
 
@@ -234,6 +234,7 @@
     }
 
     const themeKey = "mental-math-dark-mode";
+    const lastSettingsKey = "mental-math-last-settings";
     try {
       setTheme(localStorage.getItem(themeKey) === "true");
     } catch {
@@ -512,7 +513,7 @@
       }
     }
 
-    function startRound(options) {
+    function startRound(options, fields = readSettingsFields()) {
       stopTimer();
       round = options;
       question = undefined;
@@ -527,6 +528,11 @@
       updateClock();
       timer = setInterval(updateClock, 1000);
       answer.focus();
+      try {
+        localStorage.setItem(lastSettingsKey, JSON.stringify(fields));
+      } catch {
+        // The game still works when browser storage is unavailable.
+      }
     }
 
     function acceptingAnswers() {
@@ -575,10 +581,15 @@
       }
     });
 
-    optionsForm.addEventListener("submit", event => {
-      event.preventDefault();
+    function readSettingsFields() {
       const fields = Object.fromEntries(new FormData(optionsForm));
       for (const format of numberFormats) fields[format] = Boolean(fields[format]);
+      return fields;
+    }
+
+    optionsForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const fields = readSettingsFields();
       let options;
       try {
         options = readOptions(fields);
@@ -589,7 +600,7 @@
       }
       settingsError.hidden = true;
       history.pushState({ fields }, "", "#game");
-      startRound(options);
+      startRound(options, fields);
     });
 
     document.getElementById("retry").addEventListener("click", event => {
@@ -597,15 +608,32 @@
       startRound(round);
     });
     document.addEventListener("keydown", event => {
-      if (game.hidden || results.hidden || event.key !== " " || event.repeat
+      if (event.defaultPrevented || event.key !== " " || event.repeat
           || event.isComposing || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
-      event.preventDefault();
-      startRound(round);
+      if (!settings.hidden) {
+        if (event.target.closest?.("input, select, button, textarea, [contenteditable], a")) return;
+        event.preventDefault();
+        optionsForm.requestSubmit();
+      } else if (!game.hidden && !results.hidden) {
+        event.preventDefault();
+        startRound(round);
+      }
     });
     document.getElementById("change-settings").addEventListener("click", event => {
       event.preventDefault();
       history.back();
     });
+
+    function fillSettings(fields) {
+      for (const control of optionsForm.elements) {
+        if (!control.name) continue;
+        if (control.type === "checkbox") {
+          control.checked = Boolean(fields[control.name]);
+        } else if (fields[control.name] !== undefined) {
+          control.value = fields[control.name];
+        }
+      }
+    }
 
     function restorePage() {
       const saved = history.state?.fields;
@@ -621,16 +649,9 @@
           [saved["number-format"] || "whole"]: true,
           ...saved,
         };
-        for (const control of optionsForm.elements) {
-          if (!control.name) continue;
-          if (control.type === "checkbox") {
-            control.checked = Boolean(fields[control.name]);
-          } else if (fields[control.name] !== undefined) {
-            control.value = fields[control.name];
-          }
-        }
+        fillSettings(fields);
         if (operations.some(mode => fields[mode])) {
-          startRound(readOptions(fields));
+          startRound(readOptions(fields), fields);
           return;
         }
         history.replaceState(null, "", location.href.split("#")[0]);
@@ -644,6 +665,17 @@
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden && timer !== null) updateClock();
     });
+    if (!history.state?.fields) {
+      try {
+        const lastSettings = JSON.parse(localStorage.getItem(lastSettingsKey));
+        if (lastSettings) {
+          readOptions(lastSettings);
+          fillSettings(lastSettings);
+        }
+      } catch {
+        // Keep defaults if the saved settings can't be read or are invalid.
+      }
+    }
     restorePage();
   </script>
 </body>
