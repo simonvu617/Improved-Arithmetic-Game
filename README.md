@@ -6,6 +6,8 @@ A browser drill based on the layout and controls of [Arithmetic Zetamac](https:/
 
 Zetamac has inspired plenty of new versions. They add accounts, score histories, timing for individual problems, drills for your slowest questions, leaderboards, and multiplayer. But they lose Zetamac’s biggest appeal: simplicity. No login, no complicated UI, just pick your settings and start.
 
+Improved Arithmetic Game keeps Zetamac’s simple layout and controls while adding quality of life improvements and new game modes.
+
 ## Quality of life
 
 - **Space to start or restart.** Press Space to start from settings or to begin a fresh round with the same settings during or after a game. When your fingers are on the number row, your thumb is already near the space bar.
