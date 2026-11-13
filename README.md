@@ -2,7 +2,7 @@
 
 A browser drill based on [Arithmetic Zetamac](https://arithmetic.zetamac.com/).
 
-[Play on GitHub Pages](https://simonvu617.github.io/Improved-Zetamac/)
+[Play on GitHub Pages](https://simonvu617.github.io/Improved-Arithmetic-Game/)
 
 Zetamac has inspired plenty of new versions. They add accounts, score histories, timing for individual problems, drills for your slowest questions, leaderboards, and multiplayer. But they lose Zetamac’s biggest appeal: simplicity. No login, no complicated UI, just pick your settings and start.
 
@@ -18,6 +18,6 @@ Improved Arithmetic Game keeps Zetamac’s simple layout and controls while addi
 
 ## More arithmetic
 
-- **Decimals.** Set the minimum and maximum number of decimal places and mix decimal problems into a round.
 - **Powers.** Set a base range and an exponent range. Use an exponent of 2 for squares, or set a range to mix in higher powers.
 - **Roots.** Reverse the powers problems using the same base and exponent ranges.
+- **Decimals.** Set the minimum and maximum number of decimal places and mix decimal problems into a round.
