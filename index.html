@@ -130,12 +130,7 @@
             <label class="range">Exponent: <input name="power-exponent" type="text" value="2" inputmode="numeric"></label>
           </dd>
           <dt><label><input type="checkbox" name="root"> Roots</label></dt>
-          <dd>Reverses the powers using the same base range and exponent.</dd>
-          <dt><label><input type="checkbox" name="factor"> Prime factorization</label></dt>
-          <dd>
-            Range:
-            <span class="range">(<input name="factor-min" type="text" value="2" aria-label="Prime factors minimum"> to <input name="factor-max" type="text" value="500" aria-label="Prime factors maximum">)</span>
-          </dd>
+          <dd>Reverses the powers problems.</dd>
         </dl>
         <p>
           <label>Duration:
@@ -160,11 +155,10 @@
     <span id="time" class="status" role="timer"></span>
     <span id="score" class="status"></span>
     <div class="banner">
-      <form id="question" autocomplete="off">
+      <div id="question">
         <label for="answer"><span id="problem"></span> =</label>
-        <input id="answer" type="text" spellcheck="false" autocapitalize="off">
-        <p id="factor-help" hidden>Enter the prime factors in any order. Use spaces or commas and press Enter.</p>
-      </form>
+        <input id="answer" type="text" autocomplete="off" spellcheck="false" autocapitalize="off">
+      </div>
       <div id="results" hidden>
         <p id="final-score" tabindex="-1"></p>
         <p><a id="retry" href="#game">Try again</a> or <a id="change-settings" href="#">change settings</a>.</p>
@@ -178,10 +172,9 @@
     const game = document.getElementById("game");
     const timeLabel = document.getElementById("time");
     const scoreLabel = document.getElementById("score");
-    const questionForm = document.getElementById("question");
+    const questionPanel = document.getElementById("question");
     const problem = document.getElementById("problem");
     const answer = document.getElementById("answer");
-    const factorHelp = document.getElementById("factor-help");
     const results = document.getElementById("results");
     const finalScore = document.getElementById("final-score");
     const themeButton = document.getElementById("theme");
@@ -227,8 +220,10 @@
       return [min, max];
     }
 
+    const operations = ["add", "sub", "mul", "div", "power", "root"];
+
     function readOptions(fields) {
-      const modes = ["add", "sub", "mul", "div", "power", "root", "factor"].filter(mode => fields[mode]);
+      const modes = operations.filter(mode => fields[mode]);
       if (!modes.length) throw new Error("Select at least one operation.");
       const ranges = {};
       let exponent;
@@ -267,10 +262,6 @@
           throw new Error("The power is too large. Lower the exponent or narrow the base range.");
         }
       }
-      if (fields.factor) {
-        ranges.factor = readRange(fields, "factor", "Prime factorization");
-        if (ranges.factor[0] < 2) throw new Error("Prime factorization starts at 2 or higher.");
-      }
       return { modes, ranges, exponent, duration: Number(fields.duration) };
     }
 
@@ -293,65 +284,12 @@
       return min + randomBelow(max - min + 1);
     }
 
-    // These Miller–Rabin bases are deterministic for all supported integers:
-    // https://arxiv.org/abs/1207.0063
-    const primeBases = [2n, 3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n];
-
-    function isPrime(number) {
-      if (number < 2n) return false;
-      for (const prime of primeBases) {
-        if (number % prime === 0n) return number === prime;
-      }
-
-      const predecessor = number - 1n;
-      let odd = predecessor;
-      let twos = 0;
-      while (odd % 2n === 0n) {
-        odd /= 2n;
-        twos++;
-      }
-
-      for (const base of primeBases) {
-        let residue = 1n;
-        let power = base;
-        for (let exponent = odd; exponent > 0n; exponent /= 2n) {
-          if (exponent % 2n === 1n) residue = (residue * power) % number;
-          power = (power * power) % number;
-        }
-        if (residue === 1n) continue;
-        for (let step = 1; step < twos && residue !== predecessor; step++) {
-          residue = (residue * residue) % number;
-        }
-        if (residue !== predecessor) return false;
-      }
-      return true;
-    }
-
-    function matchesPrimeFactors(value, number) {
-      const parts = value.replace(/,/g, " ").trim().split(/\s+/);
-      let remaining = BigInt(number);
-      const factors = [];
-      for (const part of parts) {
-        if (!/^\d+$/.test(part)) return false;
-        const integer = Number(part);
-        if (!Number.isSafeInteger(integer) || integer < 2) return false;
-        const factor = BigInt(integer);
-        if (remaining % factor !== 0n) return false;
-        remaining /= factor;
-        factors.push(factor);
-      }
-      return remaining === 1n && factors.every(isPrime);
-    }
-
     function makeQuestion(mode) {
-      if (mode === "power" || mode === "root" || mode === "factor") {
-        const [min, max] = mode === "factor" ? round.ranges.factor : round.ranges.power;
+      if (mode === "power" || mode === "root") {
+        const [min, max] = round.ranges.power;
         let base = randomInteger([min, max]);
         while (min < max && question?.mode === mode && question.base === base) {
           base = randomInteger([min, max]);
-        }
-        if (mode === "factor") {
-          return { mode, base, text: "Prime factors of " + base };
         }
         const n = BigInt(base);
         const exponent = round.exponent;
@@ -386,12 +324,6 @@
       } while (!next);
       question = next;
       problem.textContent = question.text;
-      factorHelp.hidden = question.mode !== "factor";
-      if (factorHelp.hidden) {
-        answer.removeAttribute("aria-describedby");
-      } else {
-        answer.setAttribute("aria-describedby", "factor-help");
-      }
       answer.value = "";
     }
 
@@ -403,7 +335,7 @@
     function finishRound() {
       stopTimer();
       timeLabel.textContent = "Seconds left: 0";
-      questionForm.hidden = true;
+      questionPanel.hidden = true;
       finalScore.textContent = scoreLabel.textContent;
       results.hidden = false;
       finalScore.focus();
@@ -426,7 +358,7 @@
       scoreLabel.textContent = "Score: 0";
       settings.hidden = true;
       results.hidden = true;
-      questionForm.hidden = false;
+      questionPanel.hidden = false;
       game.hidden = false;
       nextQuestion();
       deadline = performance.now() + round.duration * 1000;
@@ -448,18 +380,8 @@
     }
 
     answer.addEventListener("input", event => {
-      if (event.isComposing || !acceptingAnswers() || question.mode === "factor") return;
+      if (event.isComposing || !acceptingAnswers()) return;
       if (answer.value.trim() === String(question.solution)) advance();
-    });
-
-    questionForm.addEventListener("submit", event => {
-      event.preventDefault();
-      if (!acceptingAnswers() || question.mode !== "factor") return;
-      if (matchesPrimeFactors(answer.value, question.base)) {
-        advance();
-      } else {
-        answer.value = "";
-      }
     });
 
     optionsForm.addEventListener("submit", event => {
@@ -506,12 +428,15 @@
             control.value = fields[control.name];
           }
         }
-        startRound(readOptions(fields));
-      } else {
-        stopTimer();
-        game.hidden = true;
-        settings.hidden = false;
+        if (operations.some(mode => fields[mode])) {
+          startRound(readOptions(fields));
+          return;
+        }
+        history.replaceState(null, "", location.href.split("#")[0]);
       }
+      stopTimer();
+      game.hidden = true;
+      settings.hidden = false;
     }
 
     window.addEventListener("popstate", restorePage);
