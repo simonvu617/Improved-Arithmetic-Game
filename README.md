@@ -8,4 +8,4 @@ A browser drill based on the layout and controls of [Arithmetic Zetamac](https:/
 
 Set a decimal-place range for **Decimals** or numerator and denominator ranges for **Fractions**. Equivalent fraction answers such as `2/4` and `1/2` are both accepted. Correct answers advance as you type.
 
-Use **Dark mode** to switch themes. Press **Esc** during or after a round to return to settings. **Reset to defaults** restores the default operations, ranges, and duration. At the end of a round, press **Space** or click **Try again** to play with the same settings.
+Use **Dark mode** to switch themes. Press **Esc** during or after a round to return to settings. **Reset to defaults** restores the default operations, ranges, and duration. Press **Space** during or after a round to restart with the same settings, or click **Try again** after the round ends.
