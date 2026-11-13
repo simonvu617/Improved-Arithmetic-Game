@@ -102,14 +102,6 @@
       align-items: center;
       height: var(--question-line-height);
     }
-    .fraction {
-      display: inline-grid;
-      vertical-align: middle;
-      font-size: 0.75em;
-      line-height: 1;
-    }
-    .fraction > span { padding: 0 0.15em; }
-    .fraction > span:first-child { border-bottom: 1px solid currentColor; }
     #answer {
       box-sizing: border-box;
       width: 180px;
@@ -154,21 +146,10 @@
           Decimal places:
           <span class="range">(<input name="decimal-places-min" type="text" value="1" aria-label="Minimum decimal places"> to <input name="decimal-places-max" type="text" value="2" aria-label="Maximum decimal places">)</span>
         </dd>
-        <dt><label><input type="checkbox" name="fraction"> Fractions</label></dt>
-        <dd>
-          Numerator:
-          <span class="range">(<input name="numerator-min" type="text" value="1" aria-label="Numerator minimum"> to <input name="numerator-max" type="text" value="9" aria-label="Numerator maximum">)</span>
-          <br>
-          Denominator:
-          <span class="range">(<input name="denominator-min" type="text" value="2" aria-label="Denominator minimum"> to <input name="denominator-max" type="text" value="9" aria-label="Denominator maximum">)</span>
-        </dd>
         <dt><label><input type="checkbox" name="power"> Powers</label></dt>
         <dd>
-          Range:
-          <span class="range">(<input name="power-min" type="text" value="10" aria-label="Power base minimum"> to <input name="power-max" type="text" value="50" aria-label="Power base maximum">)</span>
-          <br>
-          Exponent range:
-          <span class="range">(<input name="power-exponent-min" type="text" value="2" inputmode="numeric" aria-label="Minimum exponent"> to <input name="power-exponent-max" type="text" value="2" inputmode="numeric" aria-label="Maximum exponent">)</span>
+          <span class="range">Base: (<input name="power-min" type="text" value="10" aria-label="Power base minimum"> to <input name="power-max" type="text" value="50" aria-label="Power base maximum">)</span>
+          <span class="range">Exponent: (<input name="power-exponent-min" type="text" value="2" inputmode="numeric" aria-label="Minimum exponent"> to <input name="power-exponent-max" type="text" value="2" inputmode="numeric" aria-label="Maximum exponent">)</span>
         </dd>
         <dt><label><input type="checkbox" name="root"> Roots</label></dt>
         <dd>Reverses the powers problems.</dd>
@@ -275,17 +256,16 @@
       const modes = operations.filter(mode => fields[mode]);
       if (!modes.length) throw new Error("Select at least one operation.");
       const ranges = {};
-      const formats = [fields.fraction ? "fraction" : "whole"];
+      const formats = ["whole"];
       if (fields.decimal) formats.push("decimal");
       const usesBasicArithmetic = fields.add || fields.sub || fields.mul || fields.div;
-      const usesOperandRanges = !fields.fraction || fields.decimal;
-      if (usesOperandRanges && (fields.add || fields.sub)) {
+      if (fields.add || fields.sub) {
         ranges.add = [
           readRange(fields, "add-left", "Addition first"),
           readRange(fields, "add-right", "Addition second"),
         ];
       }
-      if (usesOperandRanges && (fields.mul || fields.div)) {
+      if (fields.mul || fields.div) {
         ranges.mul = [
           readRange(fields, "mul-left", "Multiplication first"),
           readRange(fields, "mul-right", "Multiplication second"),
@@ -309,15 +289,6 @@
             throw new Error("Use fewer decimal places or a narrower operand range.");
           }
         }
-      }
-      if (fields.fraction && usesBasicArithmetic) {
-        const numerator = readRange(fields, "numerator", "Numerator");
-        const denominator = readRange(fields, "denominator", "Denominator");
-        if (denominator[0] < 1) throw new Error("Denominators must be positive.");
-        if (fields.div && numerator[0] === 0 && numerator[1] === 0) {
-          throw new Error("Division needs a nonzero numerator in the range.");
-        }
-        ranges.fraction = [numerator, denominator];
       }
       if (fields.power || fields.root) {
         ranges.power = readRange(fields, "power", "Power base");
@@ -377,52 +348,25 @@
       return sign + digits.slice(0, -places) + (tail ? "." + tail : "");
     }
 
-    function formatFraction(numerator, denominator, keepTerms = false) {
-      if (keepTerms) return numerator + "/" + denominator;
-      let divisor = numerator < 0n ? -numerator : numerator;
-      let remainder = denominator;
-      while (remainder !== 0n) {
-        [divisor, remainder] = [remainder, divisor % remainder];
-      }
-      const top = numerator / divisor;
-      const bottom = denominator / divisor;
-      return bottom === 1n ? String(top) : top + "/" + bottom;
-    }
-
     const arithmeticSigns = { add: "+", sub: "–", mul: "×", div: "÷" };
 
-    function makeRationalQuestion(mode, format, ranges) {
-      let first, second, formatNumber;
-      if (format === "decimal") {
-        const places = randomInteger(round.ranges.decimal);
-        const scale = 10n ** BigInt(places);
-        first = [randomScaledInteger(ranges[0], scale), scale];
-        second = [randomScaledInteger(ranges[1], scale), scale];
-        formatNumber = formatDecimal;
-      } else {
-        const [numerators, denominators] = round.ranges.fraction;
-        first = [BigInt(randomInteger(numerators)), BigInt(randomInteger(denominators))];
-        second = [BigInt(randomInteger(numerators)), BigInt(randomInteger(denominators))];
-        formatNumber = formatFraction;
-      }
-
-      const [a, aDenominator] = first;
-      const [b, bDenominator] = second;
+    function makeDecimalQuestion(mode, ranges) {
+      const places = randomInteger(round.ranges.decimal);
+      const scale = 10n ** BigInt(places);
+      const a = randomScaledInteger(ranges[0], scale);
+      const b = randomScaledInteger(ranges[1], scale);
       if (mode === "div" && a === 0n) return;
 
       const inverse = mode === "sub" || mode === "div";
       const additive = mode === "add" || mode === "sub";
-      const combined = [
-        additive ? a * bDenominator + b * aDenominator : a * b,
-        aDenominator * bDenominator,
-      ];
-      const left = formatNumber(...(inverse ? combined : first), !inverse);
-      const right = formatNumber(...(inverse ? first : second), true);
-      const result = inverse ? second : combined;
+      const combined = additive ? a + b : a * b;
+      const combinedScale = additive ? scale : scale * scale;
+      const left = inverse ? formatDecimal(combined, combinedScale) : formatDecimal(a, scale, true);
+      const right = formatDecimal(inverse ? a : b, scale, true);
       return {
         text: left + " " + arithmeticSigns[mode] + " " + right,
-        solution: format === "fraction" ? result : formatNumber(...result),
-        format,
+        solution: inverse ? formatDecimal(b, scale) : formatDecimal(combined, combinedScale),
+        format: "decimal",
       };
     }
 
@@ -450,7 +394,7 @@
 
       const ranges = mode === "add" || mode === "sub" ? round.ranges.add : round.ranges.mul;
       const format = round.formats[randomBelow(round.formats.length)];
-      if (format !== "whole") return makeRationalQuestion(mode, format, ranges);
+      if (format === "decimal") return makeDecimalQuestion(mode, ranges);
       const a = BigInt(randomInteger(ranges[0]));
       const b = BigInt(randomInteger(ranges[1]));
       switch (mode) {
@@ -462,22 +406,6 @@
       }
     }
 
-    function fractionOperand(text) {
-      const [top, bottom] = text.split("/");
-      if (bottom === undefined) return text;
-
-      const fraction = document.createElement("span");
-      fraction.className = "fraction";
-      fraction.setAttribute("role", "math");
-      fraction.setAttribute("aria-label", top + " over " + bottom);
-      const numerator = document.createElement("span");
-      const denominator = document.createElement("span");
-      numerator.textContent = top;
-      denominator.textContent = bottom;
-      fraction.append(numerator, denominator);
-      return fraction;
-    }
-
     function nextQuestion() {
       let next;
       do {
@@ -485,12 +413,7 @@
         next = makeQuestion(mode);
       } while (!next);
       question = next;
-      if (question.format === "fraction") {
-        const [left, operator, right] = question.text.split(" ");
-        problem.replaceChildren(fractionOperand(left), " " + operator + " ", fractionOperand(right));
-      } else {
-        problem.textContent = question.text;
-      }
+      problem.textContent = question.text;
       answer.value = "";
     }
 
@@ -559,26 +482,9 @@
       return sign + (whole || "0") + (tail ? "." + tail : "") === solution;
     }
 
-    function matchesFraction(value, [numerator, denominator]) {
-      const ratio = /^([+-]?\d+)(?:\s*\/\s*([+-]?\d+))?$/.exec(value);
-      if (ratio) {
-        const divisor = BigInt(ratio[2] ?? "1");
-        return divisor !== 0n && BigInt(ratio[1]) * denominator === numerator * divisor;
-      }
-      const decimal = /^([+-]?)(\d*)\.(\d+)$/.exec(value);
-      if (!decimal) return false;
-      const [, sign, whole, digits] = decimal;
-      const scale = 10n ** BigInt(digits.length);
-      return BigInt(sign + whole + digits) * denominator === numerator * scale;
-    }
-
     answer.addEventListener("input", event => {
       if (event.isComposing || !acceptingAnswers()) return;
       const value = answer.value.trim();
-      if (question.format === "fraction") {
-        if (matchesFraction(value, question.solution)) advance();
-        return;
-      }
       const solution = String(question.solution);
       if (value === solution || (question.format === "decimal" && matchesDecimal(value, solution))) {
         advance();
@@ -659,19 +565,25 @@
       if (saved) {
         // Restore rounds saved with Squares, a fixed exponent, or the format dropdown.
         const savedExponent = saved["power-exponent"] ?? "2";
-        const fields = {
+        fillSettings({
           power: saved.square,
           "power-min": saved["square-min"],
           "power-max": saved["square-max"],
           "power-exponent-min": savedExponent,
           "power-exponent-max": savedExponent,
           decimal: saved["number-format"] === "decimal",
-          fraction: saved["number-format"] === "fraction",
           ...saved,
-        };
-        fillSettings(fields);
-        if (operations.some(mode => fields[mode])) {
-          startRound(readOptions(fields), fields);
+        });
+        const fields = readSettingsFields();
+        let options;
+        try {
+          options = readOptions(fields);
+        } catch (error) {
+          settingsError.textContent = error.message;
+          settingsError.hidden = false;
+        }
+        if (options) {
+          startRound(options, fields);
           return;
         }
         history.replaceState(null, "", location.href.split("#")[0]);

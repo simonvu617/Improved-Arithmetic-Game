@@ -19,6 +19,5 @@ Improved Arithmetic Game keeps Zetamac’s simple layout and controls while addi
 ## More arithmetic
 
 - **Decimals.** Set the minimum and maximum number of decimal places and mix decimal problems into a round.
-- **Fractions.** Choose separate ranges for numerators and denominators. Fractions are stacked in the problem, and you can type answers with a slash. Equivalent answers like `2/4` and `1/2` both count.
 - **Powers.** Set a base range and an exponent range. Use an exponent of 2 for squares, or set a range to mix in higher powers.
 - **Roots.** Reverse the powers problems using the same base and exponent ranges.
