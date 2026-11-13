@@ -74,6 +74,34 @@
       line-height: 56px;
       outline: none;
     }
+    #question:not([hidden]) {
+      --question-line-height: 1.8em;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+      column-gap: 0.25em;
+      padding-inline: 0.25em;
+      font-size: clamp(1.5rem, 6vw, 36px);
+      line-height: var(--question-line-height);
+    }
+    #question label {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      column-gap: 0.25em;
+      text-align: right;
+    }
+    @media (max-width: 480px) {
+      #question:not([hidden]) {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      }
+    }
+    #problem { overflow-wrap: anywhere; }
+    .answer-slot {
+      display: flex;
+      align-items: center;
+      height: var(--question-line-height);
+    }
     .fraction {
       display: inline-grid;
       vertical-align: middle;
@@ -83,8 +111,9 @@
     .fraction > span { padding: 0 0.15em; }
     .fraction > span:first-child { border-bottom: 1px solid currentColor; }
     #answer {
+      box-sizing: border-box;
       width: 180px;
-      max-width: 45vw;
+      max-width: 100%;
       font: inherit;
       line-height: normal;
     }
@@ -168,8 +197,10 @@
     <span id="score" class="status"></span>
     <div class="banner">
       <div id="question">
-        <label for="answer"><span id="problem"></span> =</label>
-        <input id="answer" type="text" autocomplete="off" spellcheck="false" autocapitalize="off">
+        <label for="answer"><span id="problem"></span> <span id="equals">=</span></label>
+        <div class="answer-slot">
+          <input id="answer" type="text" autocomplete="off" spellcheck="false" autocapitalize="off">
+        </div>
       </div>
       <div id="results" hidden>
         <p id="final-score" tabindex="-1"></p>
