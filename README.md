@@ -1,10 +1,10 @@
 # Improved Arithmetic Game
 
-A browser drill based on the layout and controls of [Arithmetic Zetamac](https://arithmetic.zetamac.com/), with quality of life improvements and more ways to practice. The goal is to keep the drill as simple to start and play as the original.
+A browser drill based on the layout and controls of [Arithmetic Zetamac](https://arithmetic.zetamac.com/), with quality of life improvements and more ways to practice.
 
 [Play on GitHub Pages](https://simonvu617.github.io/Improved-Zetamac/)
 
-Zetamac’s biggest appeal is its simplicity. Pick your settings and start playing. Additions like accounts, score tracking, and detailed stats can be useful, but they can also make the interface busier and take away from that simplicity. Improved Arithmetic Game keeps the original flow, with no login or dashboard.
+Zetamac has inspired plenty of new versions. They add accounts, score histories, timing for individual problems, drills for your slowest questions, leaderboards, and multiplayer. As the menus and dashboards pile up, it’s easy to lose the simplicity that makes Zetamac so appealing. Improved Arithmetic Game keeps the original flow. Pick your settings and start playing.
 
 ## Quality of life
 
