@@ -28,6 +28,17 @@
       font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
     }
     a { color: var(--link); }
+    #settings-screen:not([hidden]) {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    #settings-screen footer {
+      margin-top: auto;
+      padding: 20px;
+      text-align: right;
+    }
     #settings {
       box-sizing: border-box;
       width: min(480px, 100%);
@@ -88,56 +99,62 @@
   </style>
 </head>
 <body>
-  <main id="settings">
-    <h1>Arithmetic Game</h1>
-    <p>Solve as many arithmetic problems as you can before time runs out.</p>
-    <form id="options" autocomplete="off">
-      <dl>
-        <dt><label><input type="checkbox" name="add" checked> Addition</label></dt>
-        <dd>
-          Range:
-          <span class="range">(<input name="add-left-min" type="text" value="2" aria-label="Addition first minimum"> to <input name="add-left-max" type="text" value="100" aria-label="Addition first maximum">)</span>
-          +
-          <span class="range">(<input name="add-right-min" type="text" value="2" aria-label="Addition second minimum"> to <input name="add-right-max" type="text" value="100" aria-label="Addition second maximum">)</span>
-        </dd>
-        <dt><label><input type="checkbox" name="sub" checked> Subtraction</label></dt>
-        <dd>Reverses the addition problems.</dd>
-        <dt><label><input type="checkbox" name="mul" checked> Multiplication</label></dt>
-        <dd>
-          Range:
-          <span class="range">(<input name="mul-left-min" type="text" value="2" aria-label="Multiplication first minimum"> to <input name="mul-left-max" type="text" value="12" aria-label="Multiplication first maximum">)</span>
-          ×
-          <span class="range">(<input name="mul-right-min" type="text" value="2" aria-label="Multiplication second minimum"> to <input name="mul-right-max" type="text" value="100" aria-label="Multiplication second maximum">)</span>
-        </dd>
-        <dt><label><input type="checkbox" name="div" checked> Division</label></dt>
-        <dd>Reverses the multiplication problems.</dd>
-        <dt><label><input type="checkbox" name="square"> Squares</label></dt>
-        <dd>
-          Range:
-          <span class="range">(<input name="square-min" type="text" value="10" aria-label="Squares minimum"> to <input name="square-max" type="text" value="50" aria-label="Squares maximum">)</span>
-        </dd>
-        <dt><label><input type="checkbox" name="factor"> Prime factorization</label></dt>
-        <dd>
-          Range:
-          <span class="range">(<input name="factor-min" type="text" value="2" aria-label="Prime factors minimum"> to <input name="factor-max" type="text" value="500" aria-label="Prime factors maximum">)</span>
-        </dd>
-      </dl>
-      <p>
-        <label>Duration:
-          <select name="duration">
-            <option value="30">30 seconds</option>
-            <option value="60">60 seconds</option>
-            <option value="120" selected>120 seconds</option>
-            <option value="300">300 seconds</option>
-            <option value="600">600 seconds</option>
-          </select>
-        </label>
-      </p>
-      <p id="settings-error" role="alert" hidden></p>
-      <button id="theme" type="button" aria-pressed="false">Dark mode</button>
-      <input type="submit" value="Start">
-    </form>
-  </main>
+  <div id="settings-screen">
+    <main id="settings">
+      <h1>Arithmetic Game</h1>
+      <p>Solve as many arithmetic problems as you can before time runs out.</p>
+      <form id="options" autocomplete="off">
+        <dl>
+          <dt><label><input type="checkbox" name="add" checked> Addition</label></dt>
+          <dd>
+            Range:
+            <span class="range">(<input name="add-left-min" type="text" value="2" aria-label="Addition first minimum"> to <input name="add-left-max" type="text" value="100" aria-label="Addition first maximum">)</span>
+            +
+            <span class="range">(<input name="add-right-min" type="text" value="2" aria-label="Addition second minimum"> to <input name="add-right-max" type="text" value="100" aria-label="Addition second maximum">)</span>
+          </dd>
+          <dt><label><input type="checkbox" name="sub" checked> Subtraction</label></dt>
+          <dd>Reverses the addition problems.</dd>
+          <dt><label><input type="checkbox" name="mul" checked> Multiplication</label></dt>
+          <dd>
+            Range:
+            <span class="range">(<input name="mul-left-min" type="text" value="2" aria-label="Multiplication first minimum"> to <input name="mul-left-max" type="text" value="12" aria-label="Multiplication first maximum">)</span>
+            ×
+            <span class="range">(<input name="mul-right-min" type="text" value="2" aria-label="Multiplication second minimum"> to <input name="mul-right-max" type="text" value="100" aria-label="Multiplication second maximum">)</span>
+          </dd>
+          <dt><label><input type="checkbox" name="div" checked> Division</label></dt>
+          <dd>Reverses the multiplication problems.</dd>
+          <dt><label><input type="checkbox" name="power"> Powers</label></dt>
+          <dd>
+            Base range:
+            <span class="range">(<input name="power-min" type="text" value="10" aria-label="Power base minimum"> to <input name="power-max" type="text" value="50" aria-label="Power base maximum">)</span>
+            <label class="range">Exponent: <input name="power-exponent" type="text" value="2" inputmode="numeric"></label>
+          </dd>
+          <dt><label><input type="checkbox" name="root"> Roots</label></dt>
+          <dd>Reverses the powers using the same base range and exponent.</dd>
+          <dt><label><input type="checkbox" name="factor"> Prime factorization</label></dt>
+          <dd>
+            Range:
+            <span class="range">(<input name="factor-min" type="text" value="2" aria-label="Prime factors minimum"> to <input name="factor-max" type="text" value="500" aria-label="Prime factors maximum">)</span>
+          </dd>
+        </dl>
+        <p>
+          <label>Duration:
+            <select name="duration">
+              <option value="30">30 seconds</option>
+              <option value="60">60 seconds</option>
+              <option value="120" selected>120 seconds</option>
+              <option value="300">300 seconds</option>
+              <option value="600">600 seconds</option>
+            </select>
+          </label>
+        </p>
+        <p id="settings-error" role="alert" hidden></p>
+        <button id="theme" type="button" aria-pressed="false">Dark mode</button>
+        <input type="submit" value="Start">
+      </form>
+    </main>
+    <footer>Developed by Simon Vu</footer>
+  </div>
 
   <main id="game" hidden>
     <span id="time" class="status" role="timer"></span>
@@ -155,7 +172,7 @@
     </div>
   </main>
   <script>
-    const settings = document.getElementById("settings");
+    const settings = document.getElementById("settings-screen");
     const optionsForm = document.getElementById("options");
     const settingsError = document.getElementById("settings-error");
     const game = document.getElementById("game");
@@ -211,9 +228,10 @@
     }
 
     function readOptions(fields) {
-      const modes = ["add", "sub", "mul", "div", "square", "factor"].filter(mode => fields[mode]);
+      const modes = ["add", "sub", "mul", "div", "power", "root", "factor"].filter(mode => fields[mode]);
       if (!modes.length) throw new Error("Select at least one operation.");
       const ranges = {};
+      let exponent;
       if (fields.add || fields.sub) {
         ranges.add = [
           readRange(fields, "add-left", "Addition first"),
@@ -230,12 +248,30 @@
           throw new Error("Division needs a nonzero number in the first multiplication range.");
         }
       }
-      if (fields.square) ranges.square = readRange(fields, "square", "Squares");
+      if (fields.power || fields.root) {
+        ranges.power = readRange(fields, "power", "Power base");
+        const [min, max] = ranges.power;
+        const exponentText = fields["power-exponent"].trim();
+        exponent = Number(exponentText);
+        // Use the same maximum answer size as the multiplication drill.
+        const maxResult = BigInt(Number.MAX_SAFE_INTEGER) ** 2n;
+        const maxExponent = maxResult.toString(2).length - 1;
+        if (!/^\d+$/.test(exponentText) || exponent < 2 || exponent > maxExponent) {
+          throw new Error("Exponent must be a whole number from 2 to " + maxExponent + ".");
+        }
+        if (fields.root && exponent % 2 === 0 && min < 0) {
+          throw new Error("Even roots need a nonnegative base range.");
+        }
+        const largestBase = BigInt(Math.max(Math.abs(min), Math.abs(max)));
+        if (largestBase ** BigInt(exponent) > maxResult) {
+          throw new Error("The power is too large. Lower the exponent or narrow the base range.");
+        }
+      }
       if (fields.factor) {
         ranges.factor = readRange(fields, "factor", "Prime factorization");
         if (ranges.factor[0] < 2) throw new Error("Prime factorization starts at 2 or higher.");
       }
-      return { modes, ranges, duration: Number(fields.duration) };
+      return { modes, ranges, exponent, duration: Number(fields.duration) };
     }
 
     const randomWords = new Uint32Array(2);
@@ -308,8 +344,8 @@
     }
 
     function makeQuestion(mode) {
-      if (mode === "square" || mode === "factor") {
-        const [min, max] = round.ranges[mode];
+      if (mode === "power" || mode === "root" || mode === "factor") {
+        const [min, max] = mode === "factor" ? round.ranges.factor : round.ranges.power;
         let base = randomInteger([min, max]);
         while (min < max && question?.mode === mode && question.base === base) {
           base = randomInteger([min, max]);
@@ -318,8 +354,16 @@
           return { mode, base, text: "Prime factors of " + base };
         }
         const n = BigInt(base);
+        const exponent = round.exponent;
+        const raised = String(exponent).replace(/\d/g, digit => "⁰¹²³⁴⁵⁶⁷⁸⁹"[digit]);
+        const power = n ** BigInt(exponent);
+        if (mode === "root") {
+          const radical = ["√", "∛", "∜"][exponent - 2] ?? raised + "√";
+          const radicand = power < 0n ? "(" + power + ")" : String(power);
+          return { mode, base, text: radical + radicand, solution: n };
+        }
         const label = base < 0 ? "(" + base + ")" : String(base);
-        return { mode, base, text: label + " × " + label, solution: n * n };
+        return { mode, base, text: label + raised, solution: power };
       }
 
       const ranges = mode === "add" || mode === "sub" ? round.ranges.add : round.ranges.mul;
@@ -444,8 +488,16 @@
     });
 
     function restorePage() {
-      const fields = history.state?.fields;
-      if (fields) {
+      const saved = history.state?.fields;
+      if (saved) {
+        // Older rounds saved the base range under Squares.
+        const fields = {
+          power: saved.square,
+          "power-min": saved["square-min"],
+          "power-max": saved["square-max"],
+          "power-exponent": "2",
+          ...saved,
+        };
         for (const control of optionsForm.elements) {
           if (!control.name) continue;
           if (control.type === "checkbox") {
