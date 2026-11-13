@@ -1,6 +1,6 @@
 # Improved Arithmetic Game
 
-A browser drill based on the layout and controls of [Arithmetic Zetamac](https://arithmetic.zetamac.com/), with quality of life improvements and more ways to practice.
+A browser drill based on [Arithmetic Zetamac](https://arithmetic.zetamac.com/).
 
 [Play on GitHub Pages](https://simonvu617.github.io/Improved-Zetamac/)
 
