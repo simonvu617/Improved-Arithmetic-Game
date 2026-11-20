@@ -555,9 +555,9 @@
       }
       if (event.key !== " ") return;
       if (!settings.hidden) {
-        if (event.repeat || event.target.closest?.("input:not([type='text']), select, button, textarea, [contenteditable], a")) return;
+        if (event.target.closest?.("select, button, textarea, [contenteditable], a")) return;
         event.preventDefault();
-        optionsForm.requestSubmit();
+        if (!event.repeat) optionsForm.requestSubmit();
       } else if (!game.hidden) {
         event.preventDefault();
         if (!event.repeat) startRound(round);
