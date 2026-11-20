@@ -97,6 +97,13 @@
       }
     }
     #problem { overflow-wrap: anywhere; }
+    #problem sup {
+      position: relative;
+      top: -0.6em;
+      font-size: 0.65em;
+      line-height: 0;
+      vertical-align: baseline;
+    }
     .answer-slot {
       display: flex;
       align-items: center;
@@ -384,15 +391,15 @@
         } while (hasAlternatives && question?.mode === mode
             && question.base === base && question.exponent === exponent);
         const n = BigInt(base);
-        const raised = String(exponent).replace(/\d/g, digit => "⁰¹²³⁴⁵⁶⁷⁸⁹"[digit]);
         const power = n ** BigInt(exponent);
         if (mode === "root") {
+          const raised = String(exponent).replace(/\d/g, digit => "⁰¹²³⁴⁵⁶⁷⁸⁹"[digit]);
           const radical = ["√", "∛", "∜"][exponent - 2] ?? raised + "√";
           const radicand = power < 0n ? "(" + power + ")" : String(power);
           return { mode, base, exponent, text: radical + radicand, solution: n };
         }
         const label = base < 0 ? "(" + base + ")" : String(base);
-        return { mode, base, exponent, text: label + raised, solution: power };
+        return { mode, base, exponent, text: label, solution: power };
       }
 
       const ranges = mode === "add" || mode === "sub" ? round.ranges.add : round.ranges.mul;
@@ -417,6 +424,11 @@
       } while (!next);
       question = next;
       problem.textContent = question.text;
+      if (question.mode === "power") {
+        const exponent = document.createElement("sup");
+        exponent.textContent = question.exponent;
+        problem.append(exponent);
+      }
       answer.value = "";
     }
 
